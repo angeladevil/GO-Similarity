@@ -1,0 +1,77 @@
+library(GEOquery)
+gset<-getGEO('GSE1790',destdir='.',AnnotGPL =F,getGPL=F) //从GEO数据库中下载了该数据
+GSE1790<-read.table("GSE1790_series_matrix.txt.gz",sep='\t',quote='',fill=T,comment.char=!)//读入芯片的表达矩阵
+//从GEO数据库下载soft文件，找到ID与symbol 的对应关系
+soft<- read.csv("",sep=',',header =T)
+merge<-(GSE1790,soft,x.by= , y.by= )
+library(limma)//用limma包做差异表达分析，有3个输入参数
+//第一个参数就是表达矩阵group_list,第二个参数是design分组矩阵,第三个参数是比较矩阵
+group_list<-GSE1790[...]
+design<-data.frame(case=c(rep(1,6),rep(0,6)),control=c(rep(0,6),rep(1,6)))
+contrast.matrix<-makeContrasts(paste0(unique(group_list)),collapse='-',levels=design)
+//差异分析
+fit<-lmFit(GSE1790,design)
+fit1<-contrasts.fit(fit,contrast.matrix)
+fit2<-eBayes(fit1)
+DEG<-topTable(fit2,coef=1,n=Inf)
+nrDEG<-na.omit(DEG)//获得差异表达矩阵
+choose_gene<-head(rownames(nrDEG,57))//获取最有表达差异的基因
+//利用clusterprofiler包转换ID,并且下载数据库org.Mm.eg.db
+eg<-bitr(choose_gene,fromType='SYMBOL',toType='ENTREZID',OrgDb='org.Mm.eg.db')//ID转换完成
+//继续利用做GO富集分析
+ego<-enrichGO(
+          gene         =gene
+          keyType      ="ENTREZID"
+          OrgDb        ='org.Mm.eg.db'
+          ont          ='CC'
+          pAdjustMethod='BH'
+          pvalueCutoff=0.01,
+          qvalueCutoff=0.05,
+          readable    =TRUE)
+ //接下来就是语义相似度检测
+ 1.由于本软件装在了系统保护区，常出现包安装不成功的现象，所以必要时应以管理员身份运行程序。R本地包安装可以从菜单栏中选取。
+
+2.本次运用了两个包第一个包KEGGREST, 去Bioconductor 中下载，先安装Biocmanager，再安装KEGGREST。 加载此包。
+
+3.从kegg数据库中获取EP4受体的通路信息，存储在kegg_pathway_ptger4.txt中。
+
+4.按次序选择通路利用KEGGREST包，找到所有基因。具体方法：观察到GENE属性  gs[[1]]$GENE获取，然后观察数据，为三个一组，利用
+  genes<- unlist(lapply(gs[[1]]$GENE,function(x) strsplit(x,';')))
+  genes[1:length(genens)%%3==2]
+
+5.利用GOEAST在线工具获得基因集的差异的GO注释集，由此利用GOSemSim包测量GO集语义相似度。
+
+6.GOSemSim包的下载安装同样再Bioconductor中，安装方法为：
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.10")
+library(GOSemSim)
+library(org.Mmu.eg.db)
+
+7.测试语义相似度：mgoSim(GO1,GO2,semData,measure)  ,值介乎1 和 0之间，越靠近1，则相似度越高。其中semData指定数据库，同样指定ont
+
+8.本次测试中，从GOEAST爬取下的GO注释集带有因子化，去除因子化方法：as.character(GO)
+
+9.从GEO数据库中找寻的AII埋泵的差异表达基因与EP4通路涉及的基因转化成GO后计算语义相似度，预测EP4哪条通路与AII诱导主动脉夹层相关。
+
+10.相关网站链接以及文献参考：Toll 样受体信号通路与冠心病关系的生物信息学分析
+                                              
+                                             https://academic.oup.com/bioinformatics/article/26/7/976/213143（GOSemSim: an R package for measuring semantic similarity among GO terms and gene products）
+
+                                             http://bioconductor.org/install/
+
+                                             http://bioconductor.org/packages/release/data/annotation/html/org.Mmu.eg.db.html（semData指定的数据库）
+11.设置加载包路径函数  .libPaths()     清屏快捷键  ctrl+L
+
+12.lapply函数应用  lapply(list,function)
+    myfunction<- function(x){
+        .....
+      return(y)
+}
+ sequence<-function(x){
++ mmu<-read.csv(x,header=TRUE,sep=',')
++ mmu<-mmu$GOID
++ mmu<-as.character(mmu)
++ return(mmu)}
+
+
