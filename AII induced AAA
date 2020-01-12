@@ -74,4 +74,9 @@ library(org.Mmu.eg.db)
 + mmu<-as.character(mmu)
 + return(mmu)}
 
+13.测量语义相似度
+ d<-godata(database,ont)
+ mgoSim(GO1,GO2,d,measure)
+ ##详情可？mgoSim
+
 
